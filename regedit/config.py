@@ -10,8 +10,7 @@ class Config():
 
         self.cookie = {}
         self.interval = 60
-        self.webhook_endpoint = ''
-        self.webhook_type = ''
+        self.webhook_endpoints = {'discord': [], 'slack': []}
         self.users = []
 
     def load_config(self):
@@ -31,16 +30,17 @@ class Config():
 
         self.interval = _config.get('interval') or 60
 
-        self.webhook_endpoint = _config.get('webhook_endpoint')
-        if not self.webhook_endpoint:
+        _endpoints = _config.get('webhook_endpoints')
+        if not _endpoints:
             raise RegeditConfigInvalid('Webhook endpoint is not set')
 
-        if 'discord' in self.webhook_endpoint:
-            self.webhook_type = 'discord'
-        elif 'slack' in self.webhook_endpoint:
-            self.webhook_type = 'slack'
-        else:
-            raise RegeditConfigInvalid('Unknown webhook address type')
+        for url in _endpoints:
+            if 'discord' in url:
+                self.webhook_endpoints['discord'].append(url)
+            elif 'slack' in url:
+                self.webhook_endpoints['slack'].append(url)
+            else:
+                raise RegeditConfigInvalid('Unknown webhook address type')
 
         self.users = _config.get('users')
         if not self.users:

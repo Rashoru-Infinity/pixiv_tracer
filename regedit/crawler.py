@@ -110,15 +110,17 @@ class Crawler():
             return await img.read()
 
     async def post(self, message: dict = {}):
-        _payload = await self.enclose_packet(message)
+        for webhook_type in self.config.webhook_endpoints:
+            for url in self.config.webhook_endpoints[webhook_type]:
+                _payload = await self.enclose_packet(webhook_type, message)
+                async with self.session.post(url, data=_payload) as ret:
+                    if not ret.status in [200, 204]:
+                        print(f'POST fucked: {ret.status}, ' +
+                              f'_payload: {_payload}, ' +
+                              f'TO: {url}')
 
-        async with self.session.post(self.config.webhook_endpoint, data=_payload) as ret:
-            if not ret.status in [200, 204]:
-                print(f'POST fucked: {ret.status}')
-                print(f'_payload: {_payload}')
-
-    async def enclose_packet(self, message):
-        if self.config.webhook_type == 'discord':
+    async def enclose_packet(self, webhook_type, message):
+        if webhook_type == 'discord':
             _payload = {
                 'embeds': [
                     {
@@ -172,7 +174,7 @@ class Crawler():
                                 filename='thumbnail.jpg',
                                 content_type='image/jpeg')
             return _form
-        elif self.config.webhook_type == 'slack':
+        elif webhook_type == 'slack':
             _payload = {
                 'attachments': [
                     {

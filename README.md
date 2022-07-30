@@ -10,7 +10,7 @@
 {
     "cookie": {},
     "interval": 60,
-    "webhook_endpoint": "",
+    "webhook_endpoints": [],
     "users": [
         {
             "name": "regedit",
@@ -32,7 +32,7 @@
           ログインを実装できないので．👈 こいつダサすぎて草．プログラミング初心者かな？  
           ※コピーしてそのままだと `=` と `;` で構成されているので手動でjson形式にする．
 - inteval: クローリングする間隔．int，単位は秒．デフォルト60秒．常識的な範囲で．
-- webhook_endpoint: 通知先のwebhookのアドレス．slack or discord．
+- webhook_endpoints: 通知先のwebhookのアドレスのリスト．現在，slack or discordのみ対応．
 - users: 監視したいユーザ．ユーザ名とID．少なくとも1人は書いておこう．オススメは30815700．
     - name: 表示名
     - id: ユーザID

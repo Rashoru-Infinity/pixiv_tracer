@@ -1,7 +1,7 @@
 {
     "cookie": {},
     "interval": 60,
-    "webhook_endpoint": "",
+    "webhook_endpoints": [],
     "users": [
         {"regedit": 30815700},
         {"aabbdd129": 7181059},
