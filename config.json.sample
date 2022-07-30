@@ -1,5 +1,5 @@
 {
-    "cookie": "",
+    "cookie": {},
     "img_dir": "./cache",
     "interval": 60,
     "webhook_endpoint": "",
