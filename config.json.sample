@@ -1,0 +1,11 @@
+{
+    "cookie": "",
+    "img_dir": "./cache",
+    "interval": 60,
+    "webhook_endpoint": "",
+    "users": [
+        {"regedit": 30815700},
+        {"aabbdd129": 7181059},
+        {"ma_1750": 11451301}
+    ]
+}
