@@ -52,29 +52,29 @@ class Crawler():
         for i in self.users:
             await self.do_main(i)
 
-        print('push task')
         await asyncio.sleep(self.config.interval)
         self.loop.create_task(self._main())
 
-    async def do_main(self, user):
-        ret = await self.fetch(user)
+    async def do_main(self, user_id):
+        ret = await self.fetch(user_id)
         if ret['error']:
-            print(f'fuck {self.users[user]["name"]}/ {ret["message"]}')
+            print(f'fuck {self.users[user_id]["name"]}/ {ret["message"]}')
             exit(1)
 
-        if self.users[user]['likes'] == -1:
-            self.users[user]['likes'] = ret['body']['total']
+        if self.users[user_id]['likes'] == -1:
+            self.users[user_id]['likes'] = ret['body']['total']
             return
 
-        _diff = ret['body']['total'] - self.users[user]['likes']
-        if not _diff:
+        _diff = ret['body']['total'] - self.users[user_id]['likes']
+        if _diff < 0:
             return
 
-        self.users[user]['likes'] = ret['body']['total']
+        self.users[user_id]['likes'] = ret['body']['total']
 
         # TODO: 48枚以上とれるようにする．
         _posts = ret['body']['works'][:_diff]
         for p in _posts:
+            p['recommended_by'] = self.users[user_id]['name']
             await self.post(p)
 
     def login(self):
@@ -92,6 +92,7 @@ class Crawler():
 
         async with self.session.get(_endpoint, cookies=self.cookie, headers=_header) as ret:
             if ret.status != 200:
+                print(f'GET fucked: {ret.status}')
                 exit(1)
             try:
                 return json.loads(await ret.text())
@@ -115,21 +116,77 @@ class Crawler():
         async with self.session.get(endpoint, headers=_header) as img:
             if img.status != 200:
                 print(f'fuck {img.status}')
-                exit(1)
+                return None
 
-            async with aiofiles.open(Path(self.cache_dir, _filename), mode='wb') as f:
-                await f.write(await img.read())
+            return await img.read()
 
     async def post(self, message: dict = {}):
-        _payload = self.enclose_packet(f'オススメ: {message["title"]}')
-        _header = {'Content-Type': 'application/json'}
+        _payload = await self.enclose_packet(message)
 
-        # TODO: retcode
-        await self.session.post(self.config.webhook_endpoint,
-                                headers=_header, data=_payload)
+        async with self.session.post(self.config.webhook_endpoint, data=_payload) as ret:
+            if not ret.status in [200, 204]:
+                print(f'POST fucked: {ret.status}')
+                print(f'_payload: {_payload}')
 
-    def enclose_packet(self, message):
+    async def enclose_packet(self, message):
         if self.config.webhook_type == 'discord':
-            return json.dumps({"content": message})
+            _payload = {
+                'embeds': [
+                    {
+                        'author': {
+                            'name': 'pixiv',
+                            'url': 'https://pixiv.net',
+                            'icon_url': 'https://pbs.twimg.com/profile_images/' +
+                            '1049908233865977858/OLhsoKB6_400x400.jpg'
+                        },
+                        'title': f'{message["recommended_by"]}さんのオススメのイラストです!\n',
+                        'description': f'[{message["title"]}]' +
+                        '(https://www.pixiv.net/artworks/{message["id"]})\n\n',
+                        'color': 2073595,
+                        'thumbnail': {
+                            'url': 'attachment://thumbnail.jpg'
+                        },
+                        'footer': {
+                            'text': 'regedit (https://github.com/enjoydolylab/regedit)'
+                        },
+                        'fields': [
+                            {
+                                'name': 'イラストレーター',
+                                'value': message['userName'],
+                                'inline': False
+                            },
+                            {
+                                'name': 'Tag',
+                                'value': message['tags'][0],
+                                'inline': True
+                            }
+                        ]
+                    }
+                ]
+            }
+
+            for i in range(1, 6) if len(message['tags']) > 6 else range(1, len(message['tags'])):
+                _payload['embeds'][0]['fields'].append(
+                    {
+                        'name': '\u200B',
+                        'value': message['tags'][i],
+                        'inline': True
+                    }
+                )
+
+            _form = aiohttp.FormData()
+            _form.add_field('payload_json', json.dumps(_payload))
+            _file = await self.get_thumbnail(message['url'])
+            if _file:
+                _form.add_field('file',
+                                _file,
+                                filename='thumbnail.jpg',
+                                content_type='image/jpeg')
+            return _form
         elif self.config.webhook_type == 'slack':
-            return json.dumps({'text': message})
+            return json.dumps(
+                {
+                    'text': f'{message["recommended_by"]}さんのオススメのイラストです!\n' +
+                    f'[{message["title"]}](https: // www.pixiv.net/artworks/{message["id"]})'
+                }
+            )
