@@ -173,9 +173,72 @@ class Crawler():
                                 content_type='image/jpeg')
             return _form
         elif self.config.webhook_type == 'slack':
-            return json.dumps(
-                {
-                    'text': f'{message["recommended_by"]}さんのオススメのイラストです!\n' +
-                    f'[{message["title"]}](https: // www.pixiv.net/artworks/{message["id"]})'
-                }
-            )
+            _payload = {
+                'attachments': [
+                    {
+                        "color": "#1fa3fb",
+                        'blocks': [
+                            {
+                                'type': 'section',
+                                'text': {
+                                    'type': 'mrkdwn',
+                                    'text': f'{message["recommended_by"]}さんのおすすめのイラストです!'
+                                }
+                            },
+                            {
+                                'type': 'header',
+                                'text': {
+                                    'type': 'plain_text',
+                                    'text': f'{message["title"]}\n絵師様: {message["userName"]}',
+                                    'emoji': True
+                                }
+                            },
+                            {
+                                'type': 'section',
+                                'text': {
+                                    'type': 'mrkdwn',
+                                    'text': 'pixivで見る 👉'
+                                },
+                                'accessory': {
+                                    'type': 'button',
+                                    'text': {
+                                        'type': 'plain_text',
+                                        'text': 'Open pixiv',
+                                        'emoji': True
+                                    },
+                                    'url': f'https://www.pixiv.net/artworks/{message["id"]}'
+                                }
+                            },
+                            {
+                                'type': 'section',
+                                'text': {
+                                    'type': 'plain_text',
+                                    'text': 'Tags',
+                                    'emoji': True
+                                }
+                            },
+                            {
+                                'type': 'section',
+                                'fields': [
+                                    {
+                                        'type': 'plain_text',
+                                        'text': message['tags'][0],
+                                        'emoji': True
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+
+            for i in range(1, 6) if len(message['tags']) > 6 else range(1, len(message['tags'])):
+                _payload['attachments'][0]['blocks'][4]['fields'].append(
+                    {
+                        'type': 'plain_text',
+                        'text': message['tags'][i],
+                        'emoji': True
+                    }
+                )
+
+            return json.dumps(_payload)
