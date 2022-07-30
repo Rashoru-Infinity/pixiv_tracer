@@ -4,6 +4,14 @@
 コンフィグファイルを以下の形式で用意する．  
 適当に必要そうなパッケージをインストールして `run.py` を実行．
 
+# 実行例
+## discord
+![image](https://user-images.githubusercontent.com/43315739/181920772-b43af186-c7f4-4224-ba07-b1121b293496.png)
+
+
+## slack
+![image](https://user-images.githubusercontent.com/43315739/181920796-9d5436a7-6084-4a36-b0cf-2f79b4686f99.png)
+
 
 # configファイル
 ```json
