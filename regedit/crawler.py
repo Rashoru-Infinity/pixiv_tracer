@@ -1,12 +1,10 @@
 import asyncio
 import json
-from http import cookies
 from os import makedirs
 from pathlib import Path
 
 import aiofiles
 import aiohttp
-from aiohttp.typedefs import JSONDecoder
 
 from .config import Config
 
