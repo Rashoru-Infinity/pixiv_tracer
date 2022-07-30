@@ -1,9 +1,6 @@
 import asyncio
 import json
-from os import makedirs
-from pathlib import Path
 
-import aiofiles
 import aiohttp
 
 from .config import Config
@@ -20,11 +17,6 @@ class Crawler():
 
     def main(self):
         self.load_config()
-        try:
-            makedirs(self.config.cache_dir, exist_ok=True)
-        except FileExistsError:
-            # TODO: 同名のファイルがある場合適当にリネームするとか
-            raise FileExistsError
 
         self.loop.create_task(self._main())
         self.loop.run_forever()
@@ -109,9 +101,6 @@ class Crawler():
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
             'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
         }
-
-        # TODO: cache dir の検索
-        _filename = endpoint.split('/')[-1]
 
         async with self.session.get(endpoint, headers=_header) as img:
             if img.status != 200:

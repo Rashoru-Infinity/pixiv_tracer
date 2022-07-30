@@ -9,7 +9,6 @@ class Config():
         self.config_path = Path(config_file_path)
 
         self.cookie = {}
-        self.cache_dir = None
         self.interval = 60
         self.webhook_endpoint = ''
         self.webhook_type = ''
@@ -29,9 +28,6 @@ class Config():
         if not self.cookie:
             raise RegeditConfigInvalid('Cookie is None')
         self.cookie['login_ever'] = 'yes'
-
-        self.cache_dir = Path(_config['img_dir']) \
-            if 'img_dir' in _config else Path('cache')
 
         self.interval = _config.get('interval') or 60
 
