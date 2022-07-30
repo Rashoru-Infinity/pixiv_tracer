@@ -130,7 +130,7 @@ class Crawler():
                         },
                         'title': f'{message["recommended_by"]}さんのオススメのイラストです!\n',
                         'description': f'[{message["title"]}]' +
-                        '(https://www.pixiv.net/artworks/{message["id"]})\n\n',
+                        f'(https://www.pixiv.net/artworks/{message["id"]})\n\n',
                         'color': 2073595,
                         'thumbnail': {
                             'url': 'attachment://thumbnail.jpg'
