@@ -1,42 +1,47 @@
-# HGWR
+# PixivTracer
+指定したPixivユーザのブックマークをDiscordやSlackに投稿します
 
 # 実行方法
-コンフィグファイルを以下の形式で用意する．  
+下記の通りに環境変数を設定する  
+| 環境変数名 | 説明 |
+| --- | ---|
+| COOKIE | クローラーがPixivにログインするためのcookie情報 |
+| INTERVAL | クローラーがPixivにアクセスする周期(sec) |
+| DISCORD_ENDPOINT | Webhookのエンドポイント(Discord) |
+| SLACK_ENDPOINT | Webhookのエンドポイント(Slack) |
+| USER | 監視対象のユーザ名 |
+| ID | 監視対象のユーザID |
+
 適当に必要そうなパッケージをインストールして `run.py` を実行．
 
+## cookieの取得方法・フォーマット
+1. シークレットモードでpixivにアクセスする
+1. F12で開発者ツールを開く
+1. ログイン情報を入力してログインする
+1. NetworkのタブからHeadersのタブを開いてcookieのフィールドの値をコピーする
 
-# configファイル
-```json
-{
-    "cookie": {},
-    "interval": 60,
-    "webhook_endpoints": [],
-    "users": [
-        {
-            "name": "regedit",
-            "id": 30815700
-        },
-        {
-            "name": "aabbdd129",
-            "id": 7181059
-        },
-        {
-            "name": "ma_1750",
-            "id": 11451301
-        }
-    ]
-}
+![image](https://user-images.githubusercontent.com/49583698/182020575-f69e3296-678a-41c3-bf67-51ce3df64b23.png)
+
+## Dockerでの実行
+下記のdocker-composeファイルに環境変数を設定することで実行できる  
+```yml
+version: '3'
+
+services:
+  pixiv_tracer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pixiv_tracer
+    restart: always
+    environment:
+      COOKIE: "xxx"
+      INTERVAL: 10
+      DISCORD_ENDPOINT: "xxx"
+      SLACK_ENDPOINT: "xxx"
+      USER: "xxx"
+      ID: xxx
 ```
-
-- cookie: Pixivにログインしたときのcookieをブラウザのデベロッパーツールから持ってくる．  
-          ログインを実装できないので．👈 こいつダサすぎて草．プログラミング初心者かな？  
-          ※コピーしてそのままだと `=` と `;` で構成されているので手動でjson形式にする．
-- inteval: クローリングする間隔．int，単位は秒．デフォルト60秒．常識的な範囲で．
-- webhook_endpoints: 通知先のwebhookのアドレスのリスト．現在，slack or discordのみ対応．
-- users: 監視したいユーザ．ユーザ名とID．少なくとも1人は書いておこう．オススメは30815700．
-    - name: 表示名
-    - id: ユーザID
-
 
 # コメント
 コメント，PR募集しています．Twitter: `@_ma1750_`
