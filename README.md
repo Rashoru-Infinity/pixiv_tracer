@@ -20,6 +20,14 @@
 1. ログイン情報を入力してログインする
 1. NetworkのタブからHeadersのタブを開いてcookieのフィールドの値をコピーする
 
+# 実行例
+## discord
+![image](https://user-images.githubusercontent.com/43315739/181920772-b43af186-c7f4-4224-ba07-b1121b293496.png)
+
+
+## slack
+![image](https://user-images.githubusercontent.com/43315739/181920796-9d5436a7-6084-4a36-b0cf-2f79b4686f99.png)
+
 ![image](https://user-images.githubusercontent.com/49583698/182020575-f69e3296-678a-41c3-bf67-51ce3df64b23.png)
 
 ## Dockerでの実行
