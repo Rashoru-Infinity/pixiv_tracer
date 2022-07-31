@@ -1,4 +1,6 @@
+.dockerignore
 .git
 .gitginore
+docker-comopose.yml
+docker-compose.yml.sample
 README.md
-docker-comopose.yml.sample

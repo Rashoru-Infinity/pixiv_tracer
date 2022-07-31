@@ -12,7 +12,7 @@ class Crawler():
         self.session = None
         self.config = None
         self.cookie = None
-        self.likes = -1
+        self.likes = {}
 
     def main(self):
         self.load_config()
@@ -23,12 +23,14 @@ class Crawler():
     def load_config(self):
         try:
             _config = Config()
-            _config.valid_config()
+            _config.load_config()
         except Exception as _e:
             print(_e)
             exit(1)
 
         self.config = _config
+        for name in self.config.users:
+            self.likes[name] = -1
 
     async def _main(self):
         if not self.session:
@@ -36,31 +38,32 @@ class Crawler():
         if not self.cookie:
             self.cookie = self.login()
 
-        await self.do_main()
+        for name in self.config.users:
+            await self.do_main(name)
 
         await asyncio.sleep(self.config.interval)
         self.loop.create_task(self._main())
 
-    async def do_main(self):
-        ret = await self.fetch(self.config.id)
+    async def do_main(self, name):
+        ret = await self.fetch(self.config.users[name])
         if ret['error']:
-            print(f'fuck {self.config.user}/ {ret["message"]}')
+            print(f'fuck {name}/ {ret["message"]}')
             exit(1)
 
-        if self.likes == -1:
-            self.likes = ret['body']['total']
+        if self.likes[name] == -1:
+            self.likes[name] = ret['body']['total']
             return
 
-        _diff = ret['body']['total'] - self.likes
+        _diff = ret['body']['total'] - self.likes[name]
         if _diff < 0:
             return
 
-        self.likes = ret['body']['total']
+        self.likes[name] = ret['body']['total']
 
         # TODO: 48枚以上とれるようにする．
         _posts = ret['body']['works'][:_diff]
         for p in _posts:
-            p['recommended_by'] = self.config.user
+            p['recommended_by'] = name
             await self.post(p)
 
     def login(self):
@@ -104,20 +107,14 @@ class Crawler():
             return await img.read()
 
     async def post(self, message: dict = {}):
-        if self.config.discord_endpoint:
-            _payload = await self.enclose_packet('discord', message)
-            async with self.session.post(self.config.discord_endpoint, data=_payload) as ret:
-                if not ret.status in [200, 204]:
-                    print(f'POST fucked: {ret.status}, ' +
-                            f'_payload: {_payload}, ' +
-                            f'TO: {self.config.discord_endpoint}')
-        if self.config.slack_endpoint:
-            _payload = await self.enclose_packet('slack', message)
-            async with self.session.post(self.config.slack_endpoint, data=_payload) as ret:
-                if not ret.status in [200, 204]:
-                    print(f'POST fucked: {ret.status}, ' +
-                            f'_payload: {_payload}, ' +
-                            f'TO: {self.config.slack_endpoint}')
+        for webhook_type in self.config.webhook_endpoints:
+            for url in self.config.webhook_endpoints[webhook_type]:
+                _payload = await self.enclose_packet(webhook_type, message)
+                async with self.session.post(url, data=_payload) as ret:
+                    if not ret.status in [200, 204]:
+                        print(f'POST fucked: {ret.status}, ' +
+                              f'_payload: {_payload}, ' +
+                              f'TO: {url}')
 
     async def enclose_packet(self, webhook_type, message):
         if webhook_type == 'discord':

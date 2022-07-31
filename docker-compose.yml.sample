@@ -8,9 +8,7 @@ services:
     container_name: pixiv_tracer
     restart: always
     environment:
-      COOKIE: "xxx"
+      COOKIE: "first_visit_datetime_pc=..."
       INTERVAL: 10
-      DISCORD_ENDPOINT: "xxx"
-      SLACK_ENDPOINT: "xxx"
-      USER: "xxx"
-      ID: xxx
+      WEBHOOKS: "{\"webhooks\": [\"webhook1\", \"webhook2\"]}"
+      USERS: "{\"user1\": id1, \"user2\": id2, \"user3\": id3}"
