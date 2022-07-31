@@ -8,4 +8,4 @@ class RegeditConfigInvalid(RegeditFucked):
         self.message = message
 
     def __str__(self) -> str:
-        return f'Config file is invalid: {self.message}'
+        return f'Invalid configuration: {self.message}'

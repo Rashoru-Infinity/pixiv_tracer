@@ -7,13 +7,12 @@ from .config import Config
 
 
 class Crawler():
-    def __init__(self, config_file_path='config.json'):
-        self.config_file_path = config_file_path
+    def __init__(self):
         self.loop = asyncio.get_event_loop()
         self.session = None
         self.config = None
-        self.cookie = {}
-        self.users = {}
+        self.cookie = None
+        self.likes = -1
 
     def main(self):
         self.load_config()
@@ -23,17 +22,13 @@ class Crawler():
 
     def load_config(self):
         try:
-            _config = Config(self.config_file_path)
-            _config.load_config()
+            _config = Config()
+            _config.valid_config()
         except Exception as _e:
             print(_e)
             exit(1)
 
         self.config = _config
-
-        for i in self.config.users:
-            self.users[i['id']] = i
-            self.users[i['id']]['likes'] = -1
 
     async def _main(self):
         if not self.session:
@@ -41,32 +36,31 @@ class Crawler():
         if not self.cookie:
             self.cookie = self.login()
 
-        for i in self.users:
-            await self.do_main(i)
+        await self.do_main()
 
         await asyncio.sleep(self.config.interval)
         self.loop.create_task(self._main())
 
-    async def do_main(self, user_id):
-        ret = await self.fetch(user_id)
+    async def do_main(self):
+        ret = await self.fetch(self.config.id)
         if ret['error']:
-            print(f'fuck {self.users[user_id]["name"]}/ {ret["message"]}')
+            print(f'fuck {self.config.user}/ {ret["message"]}')
             exit(1)
 
-        if self.users[user_id]['likes'] == -1:
-            self.users[user_id]['likes'] = ret['body']['total']
+        if self.likes == -1:
+            self.likes = ret['body']['total']
             return
 
-        _diff = ret['body']['total'] - self.users[user_id]['likes']
+        _diff = ret['body']['total'] - self.likes
         if _diff < 0:
             return
 
-        self.users[user_id]['likes'] = ret['body']['total']
+        self.likes = ret['body']['total']
 
         # TODO: 48枚以上とれるようにする．
         _posts = ret['body']['works'][:_diff]
         for p in _posts:
-            p['recommended_by'] = self.users[user_id]['name']
+            p['recommended_by'] = self.config.user
             await self.post(p)
 
     def login(self):
@@ -110,14 +104,20 @@ class Crawler():
             return await img.read()
 
     async def post(self, message: dict = {}):
-        for webhook_type in self.config.webhook_endpoints:
-            for url in self.config.webhook_endpoints[webhook_type]:
-                _payload = await self.enclose_packet(webhook_type, message)
-                async with self.session.post(url, data=_payload) as ret:
-                    if not ret.status in [200, 204]:
-                        print(f'POST fucked: {ret.status}, ' +
-                              f'_payload: {_payload}, ' +
-                              f'TO: {url}')
+        if self.config.discord_endpoint:
+            _payload = await self.enclose_packet('discord', message)
+            async with self.session.post(self.config.discord_endpoint, data=_payload) as ret:
+                if not ret.status in [200, 204]:
+                    print(f'POST fucked: {ret.status}, ' +
+                            f'_payload: {_payload}, ' +
+                            f'TO: {self.config.discord_endpoint}')
+        if self.config.slack_endpoint:
+            _payload = await self.enclose_packet('slack', message)
+            async with self.session.post(self.config.slack_endpoint, data=_payload) as ret:
+                if not ret.status in [200, 204]:
+                    print(f'POST fucked: {ret.status}, ' +
+                            f'_payload: {_payload}, ' +
+                            f'TO: {self.config.slack_endpoint}')
 
     async def enclose_packet(self, webhook_type, message):
         if webhook_type == 'discord':
